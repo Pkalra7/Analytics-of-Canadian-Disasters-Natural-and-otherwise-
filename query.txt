@@ -1,0 +1,162 @@
+Determine  X  in  {fatalities, injuries, evacuations} per  Y  in  {disaster type, disaster subgroup,
+disaster group, disaster category, year, month, date, location (city), province, country (Canada or
+International)}
+
+
+Year drill down
+SELECT D.year_actual L.country COUNT(F.fatalities)
+FROM factCausalies F
+INNER JOIN dimDate D
+	ON F.start_date_key = D.date_key
+INNER JOIN dimLocation L
+	ON F.location_key = L.location_key
+INNER JOIN dimDisaster T
+	ON F.disaster_key = T.disaster_key
+WHERE T.disaster_type = “ wildfires” 
+GROUP BY D.year L.Country
+
+Month drill down
+SELECT D.month_name L.country COUNT(F.fatalities)
+FROM factCausalies F
+INNER JOIN dimDate D
+	ON F.start_date_key = D.date_key
+INNER JOIN dimLocation L
+	ON F.location_key = L.location_key
+INNER JOIN dimDisaster T
+	ON F.disaster_key = T.disaster_key
+WHERE T.disaster_type = “ wildfires” 
+GROUP BY D.month_name L.Country
+
+Day drill down
+SELECT D.day_name L.country COUNT(F.fatalities)
+FROM factCausalies F
+INNER JOIN dimDate D
+	ON F.start_date_key = D.date_key
+INNER JOIN dimLocation L
+	ON F.location_key = L.location_key
+INNER JOIN dimDisaster T
+	ON F.disaster_key = T.disaster_key
+WHERE T.disaster_type = “ wildfires” 
+GROUP BY D.day_name L.Country
+
+
+Country Drill down
+SELECT D.year_actual L.country COUNT(F.fatalities)
+FROM factCausalies F
+INNER JOIN dimDate D
+	ON F.start_date_key = D.date_key
+INNER JOIN dimLocation L
+	ON F.location_key = L.location_key
+INNER JOIN dimDisaster T
+	ON F.disaster_key = T.disaster_key
+WHERE T.type = “ wildfires”
+GROUP BY D.year L.Country
+
+
+Province Drill Down
+SELECT D.year_actual L.province COUNT(F.fatalities)
+FROM factCausalies F
+INNER JOIN dimDate D
+	ON F.start_date_key = D.date_key
+INNER JOIN dimLocation L
+	ON F.location_key = L.location_key
+INNER JOIN dimDisaster T
+	ON F.disaster_key = T.disaster_key
+WHERE T.type = “ wildfires”
+GROUP BY D.year L.province
+
+City drill Down
+SELECT D.year_actual L.city COUNT(F.fatalities)
+FROM factCausalies F
+INNER JOIN dimDate D
+	ON F.start_date_key = D.date_key
+INNER JOIN dimLocation L
+	ON F.location_key = L.location_key
+INNER JOIN dimDisaster T
+	ON F.disaster_key = T.disaster_key
+WHERE T.type = “ wildfires”
+GROUP BY D.year L.city
+
+
+
+//For instance, contrast the number of fatalities in Ontario due to wildfires, during 1999,
+//with the number of fatalities in Ontario due to flooding, during 1999.
+SELECT T.disaster_type D.Year COUNT(F.Fatalities)
+FROM factCausalities F
+INNER JOIN dimDisaster T
+	ON F.disater_key = T.disaster_Key
+INNER JOIN dimDate D
+	ON F.date_key = D.date_Key
+INNER JOIN dimLocation L
+	ON F.location_key = L.location_key
+Where L.location = “Ontario” AND D.Year = “1999” 
+GROUP BY T.disaster_type D.year
+
+
+
+//For instance, contrast the number of fatalities in Ontario due to wildfires, during 1999,
+//with the number of fatalities in Quebec due to wildfires, during 1999.
+SELECT Count(F.fatalities) T.disaster_Type, L.province
+FROM factCausalities F
+INNER JOIN dimDisaster T
+	ON T.disaster_key = F.disaster_key
+INNER JOIN dimLoction L
+	ON F.location_key = L.location_key
+INNER JOIN dimDate D
+	ON F.date_key = D.date_key
+WHERE T.type = “wildfires” AND D.Year = “1999” AND (L.province = "ONTARO" OR L.province = "Quebec" )
+GROPU BY L.province, T.disaster_type
+
+
+//For instance, contrast the number of fatalities in Ontario due to wildfires, during
+//December 1999, with the number of fatalities in Ontario due to flooding, in December
+//1999, and so on. 
+SELECT T.type COUNT(F.fatalities)
+FROM factCausalities F
+INNER JOIN dimDisaster T
+	ON T.disaster_Key = F.disaster_key
+INNER JOIN dimLoction L
+	ON F.location_key = L.location_key
+INNER JOIN dimDate D
+	ON F.date_key = D.date_key
+WHERE D.month = “December” AND D.Year = “1999”
+GROUP BY T.Type, F.fatalities
+
+//For instance, determine the 5 cities in Canada with the most riots.
+SELECT DISTINCT(L.City) COUNT(T.Key) 
+FROM factCausalities F
+INNER JOIN dimDisaster T
+	ON T.disaster_key = F.disaster_key
+INNER JOIN dimLoction L
+	ON F.location_key = L.location_key
+WHERE L.Country = “Canada” AND T.Type = “riot”
+ORDER BY MAX(T.Key) DESC
+OPTIMIZE FOR 5 ROWS
+
+//For instance, determine the increase in normalized costs of wildfires over the last 50
+//years.
+SELECT C.Nomralized-total-cost, T.disaster_type, DISTINCT(D.year)
+FROM factCausalities F
+INNER JOIN dimCost C
+	ON F.cost_key = C.cost_key
+INNER JOIN dimDate D
+	ON F.date_key = D.date_key
+INNER JOIN dimDisaster T
+	ON F.disaster_key = T.disater_key
+WHERE T.Tdisaster_type = “wildfires”
+ORDER BY C.NTC INCR 
+OPTIMIZE FOR 50 ROWS
+
+For instance, determine the trends in fatalities due to riots over last 100 years.
+SELECT Distinct(D.year), F.fatalities
+FROM factCausalities F
+INNER JOIN dimDate D
+	ON F.date_key = D.date_Key
+INNER JOIN dimDisaster T
+	ON F.disaster_key = T.disaster_Key
+GROUP BY D.year, F.fatalities
+OPTIMIZE FOR 100 ROWS
+
+
+
+
