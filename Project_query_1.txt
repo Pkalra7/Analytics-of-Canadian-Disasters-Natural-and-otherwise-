@@ -1,0 +1,193 @@
+Determine  X  in  {fatalities, injuries, evacuations} per  Y  in  {disaster type, disaster subgroup,
+disaster group, disaster category, year, month, date, location (city), province, country (Canada or
+International)}
+
+
+Number of fatalities per year/month/day in countries due to wildfire
+
+---------------------------------------------------
+Year Drill Down
+
+SELECT D.year_actual, L.country, COUNT(F.fatalities)
+FROM factcasualties F
+INNER JOIN dimdate D ON F.start_date_key = D.date_key
+INNER JOIN dimlocation L ON F.location_key = L.location_key
+INNER JOIN dimdisaster S ON F.disaster_key = S.disaster_key
+WHERE S.disaster_type = 'Wildfire'
+GROUP BY D.year_actual, L.country
+
+---------------------------------------------------
+
+
+---------------------------------------------------
+Month drill down
+
+SELECT D.month_name, L.country, COUNT(F.fatalities)
+FROM factcasualties F
+INNER JOIN dimdate D ON F.start_date_key = D.date_key
+INNER JOIN dimlocation L ON F.location_key = L.location_key
+INNER JOIN dimdisaster S ON F.disaster_key = S.disaster_key
+WHERE S.disaster_type = 'Wildfire'
+GROUP BY D.month_name, L.country
+
+---------------------------------------------------
+
+
+---------------------------------------------------
+Day drill down
+
+SELECT D.day_name, L.country, COUNT(F.fatalities)
+FROM factcasualties F
+INNER JOIN dimdate D ON F.start_date_key = D.date_key
+INNER JOIN dimlocation L ON F.location_key = L.location_key
+INNER JOIN dimdisaster S ON F.disaster_key = S.disaster_key
+WHERE S.disaster_type = 'Wildfire'
+GROUP BY D.day_name, L.country
+---------------------------------------------------
+
+
+
+
+Number of fatalities in 1999 per city/province/country due to wildfire
+---------------------------------------------------
+City roll up
+
+SELECT D.year_actual, L.city, COUNT(F.fatalities)
+FROM factcasualties F
+INNER JOIN dimdate D ON F.start_date_key = D.date_key
+INNER JOIN dimlocation L ON F.location_key = L.location_key
+INNER JOIN dimdisaster S ON F.disaster_key = S.disaster_key
+WHERE S.disaster_type = 'Wildfire' AND D.year_actual = '1999'
+GROUP BY D.year_actual, L.city
+---------------------------------------------------
+
+---------------------------------------------------
+Province roll up
+
+SELECT D.year_actual, L.province, COUNT(F.fatalities)
+FROM factcasualties F
+INNER JOIN dimdate D ON F.start_date_key = D.date_key
+INNER JOIN dimlocation L ON F.location_key = L.location_key
+INNER JOIN dimdisaster S ON F.disaster_key = S.disaster_key
+WHERE S.disaster_type = 'Wildfire' AND D.year_actual = '1999'
+GROUP BY D.year_actual, L.province
+---------------------------------------------------
+
+---------------------------------------------------
+Country roll up
+
+SELECT D.year_actual, L.country, COUNT(F.fatalities)
+FROM factcasualties F
+INNER JOIN dimdate D ON F.start_date_key = D.date_key
+INNER JOIN dimlocation L ON F.location_key = L.location_key
+INNER JOIN dimdisaster S ON F.disaster_key = S.disaster_key
+WHERE S.disaster_type = 'Wildfire' AND D.year_actual = '1999'
+GROUP BY D.year_actual, L.country
+
+---------------------------------------------------
+
+
+
+
+
+For instance, determine the total number of fatalities in Ontario during 1999.
+---------------------------------------------------
+Slice
+
+SELECT D.year_actual, L.province, COUNT(F.fatalities)
+FROM factcasualties F
+INNER JOIN dimdate D ON F.start_date_key = D.date_key
+INNER JOIN dimlocation L ON F.location_key = L.location_key
+INNER JOIN dimdisaster S ON F.disaster_key = S.disaster_key
+WHERE L.province = 'Ontario' AND D.year_actual = '1999'
+GROUP BY D.year_actual, L.province
+
+---------------------------------------------------
+
+
+
+
+For instance, determine the total number of fatalities due to natural disasters in
+Ontario during 1999, and so on.
+---------------------------------------------------
+Slice
+
+SELECT L.province, D.year_actual as year, COUNT(F.fatalities)
+FROM factcasualties F
+INNER JOIN dimdate D ON F.start_date_key = D.date_key
+INNER JOIN dimlocation L ON F.location_key = L.location_key
+INNER JOIN dimdisaster S ON F.disaster_key = S.disaster_key
+WHERE L.province = 'Ontario' AND D.year_actual >= '1999' AND S.disaster_group = 'Natural' 
+GROUP BY D.year_actual, L.province
+ORDER BY D.year_actual
+
+
+---------------------------------------------------
+
+
+
+For instance, contrast the number of fatalities in Ontario due to wildfires, during 1999,
+with the number of fatalities in Ontario due to flooding, during 1999.
+---------------------------------------------------
+Dice
+
+SELECT S.disaster_type as disaster, L.province, D.year_actual, COUNT(F.fatalities)
+FROM factcasualties F
+INNER JOIN dimdate D ON F.start_date_key = D.date_key
+INNER JOIN dimlocation L ON F.location_key = L.location_key
+INNER JOIN dimdisaster S ON F.disaster_key = S.disaster_key
+WHERE (L.province = 'Ontario' AND D.year_actual = '1999' AND S.disaster_type = 'Wildfire') OR
+(L.province = 'Ontario' AND D.year_actual = '1999' AND S.disaster_type = 'Flood')
+GROUP BY D.year_actual, L.province, S.disaster_type
+
+---------------------------------------------------
+
+
+
+
+For instance, contrast the number of fatalities in Ontario due to wildfires, during 1999,
+with the number of fatalities in Quebec due to wildfires, during 1999.
+---------------------------------------------------
+Dice
+
+SELECT S.disaster_type as disaster, L.province as province, D.year_actual, COUNT(F.fatalities)
+FROM factcasualties F
+INNER JOIN dimdate D ON F.start_date_key = D.date_key
+INNER JOIN dimlocation L ON F.location_key = L.location_key
+INNER JOIN dimdisaster S ON F.disaster_key = S.disaster_key
+WHERE (L.province = 'Ontario' AND D.year_actual = '1999' AND S.disaster_type = 'Wildfire') or 
+(L.province = 'Quebec' AND D.year_actual = '1999' AND S.disaster_type = 'Wildfire')
+GROUP BY D.year_actual, L.province, S.disaster_type
+
+---------------------------------------------------
+
+
+
+
+For instance, determine the 5 cities in Canada with the most riots.
+---------------------------------------------------
+TOP 5 rows
+
+SELECT S.disaster_type, L.city as city
+FROM factcasualties F
+INNER JOIN dimdate D ON F.start_date_key = D.date_key
+INNER JOIN dimlocation L ON F.location_key = L.location_key
+INNER JOIN dimdisaster S ON F.disaster_key = S.disaster_key
+WHERE S.disaster_type = 'Rioting' AND L.country = 'Canada'
+GROUP BY S.disaster_type, L.city
+ORDER BY COUNT(L.city)
+LIMIT 5
+---------------------------------------------------
+
+
+For instance, determine the trends in fatalities due to riots over last 100 years.
+---------------------------------------------------
+SELECT S.disaster_type, D.year_actual as year, F.fatalities
+FROM factcasualties F
+INNER JOIN dimdate D ON F.start_date_key = D.date_key
+INNER JOIN dimdisaster S ON F.disaster_key = S.disaster_key
+WHERE S.disaster_type = 'Rioting'
+GROUP BY S.disaster_type, D.year_actual, F.fatalities
+ORDER BY D.year_actual
+LIMIT 100
+---------------------------------------------------
